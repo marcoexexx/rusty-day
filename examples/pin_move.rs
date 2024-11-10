@@ -6,24 +6,6 @@ fn is_unpin<T: Unpin>(data: T) -> bool {
     true
 }
 
-fn dangerously_move() {
-    let v = Box::new(String::from("hello"));
-    println!("addr: {:p} -> {:p}", &v, &(*v));
-
-    let addr = &*v as *const String;
-
-    unsafe {
-        println!("val: {:p} - {}", addr, *addr);
-    }
-
-    let _v = *v;
-    println!("\nmoved: {:p}\n", &*_v);
-
-    unsafe {
-        println!("val: {:p} - {}", addr, *addr);
-    }
-}
-
 fn prevent_move_on_stack() {
     let data = String::from("hello"); // `String` is movable.
     let pinned = Pin::new(&data); // Pinned reference, but doesn't truly prevent moves.
@@ -49,5 +31,4 @@ fn prevent_move_on_heap() {
 }
 
 fn main() {
-    // dangerously_move();
 }
