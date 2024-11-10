@@ -45,6 +45,7 @@ fn prevent_move_on_heap() {
 
     // compile error: cannot move
     // let moved = *pinned;
+    // let moved = Pin::into_inner(pinned);  // Cannot safely move inner value, dyn Todo is Unpin
 }
 
 fn main() {
