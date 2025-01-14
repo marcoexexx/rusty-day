@@ -17,12 +17,29 @@ impl Cat {
       _marker: PhantomPinned,
     }
   }
+
+  /// Invalid parameter
+  /// `self`, `&self`, `&mut self`, `self: Box<Self>`, `self: Rc<Self>`, `self: Pin<P>`
+  // fn pinned_method(self: Pin<Self>) {
+  //   println!("This method must pin");
+  // }
+
+  fn pinned_method_ref(self: Pin<&Self>) {
+    println!("This method must pin");
+  }
+
+  fn pinned_method_mut_ref(self: Pin<&mut Self>) {
+    println!("This method must pin");
+  }
 }
 
 fn main() {
   // let mut tom = Cat::new("Tome");
   // let mut tom = Box::new(Cat::new("Tome"));
   let mut tom = Box::pin(Cat::new("Tome"));
+
+  tom.as_ref().pinned_method_ref();
+  tom.as_mut().pinned_method_mut_ref();
 
   let moved = tom.name; // Cant move
 }

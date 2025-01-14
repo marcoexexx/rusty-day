@@ -1,9 +1,9 @@
+#![allow(unused)]
+
 use std::future::Future;
 use std::pin::Pin;
 use std::task::{Context, Poll};
 use std::time::{Duration, Instant};
-
-use tokio::time::Instant;
 
 struct RandFuture;
 
@@ -34,15 +34,32 @@ impl<Fut: Future> Future for TimeWrapper<Fut> {
   type Output = (Fut::Output, Duration);
 
   fn poll(self: Pin<&mut Self>, cx: &mut Context<'_>) -> Poll<Self::Output> {
-    let start = self.start.get_or_insert_with(Instant::now);
-    let inner_poll = self.future.poll(cx);
-    let elapsed = self.elapsed();
+    unsafe {
+      let instance = self.get_unchecked_mut();
+      instance.start.get_or_insert_with(Instant::now);
 
-    match inner_poll {
-      Poll::Pending => Poll::Pending,
-      Poll::Ready(output) => Poll::Ready((output, elapsed)),
+      match Pin::new_unchecked(&mut instance.future).poll(cx) {
+        Poll::Pending => Poll::Pending,
+        Poll::Ready(output) => {
+          let duration = instance.start.unwrap().elapsed();
+          Poll::Ready((output, duration))
+        }
+      }
     }
   }
 }
 
-fn main() {}
+#[tokio::main]
+async fn main() -> Result<(), Box<dyn std::error::Error>> {
+  let my_fut = async {
+    tokio::time::sleep(Duration::from_secs(1)).await;
+    42
+  };
+
+  let timed_wrapper = TimeWrapper::new(my_fut);
+  let (result, duration) = timed_wrapper.await;
+
+  println!("Result: {result}, Duration: {duration:?}");
+
+  Ok(())
+}
